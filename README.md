@@ -1,5 +1,7 @@
 # Introducing PiWebcam
 
+*Forked from https://sourceforge.net/projects/piwebcam/*
+
 When I need a webcam for monitoring my house or my backyard I use to go and buy it on Amazon/Aliexpress/ebay/Walmart/etc.
 True, you can find very **cheap models** with a lot of features but most of the times I've been very **disappointed of my shopping experience**.
 

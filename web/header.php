@@ -18,8 +18,9 @@ $footer = array();
 function run($command) {
 	global $message;
 	global $config;
+
 	if (array_key_exists("DEBUG",$config) && $config["DEBUG"]) array_push($message["info"],"$ ".$command);
-	$ret = shell_exec("sudo REMOTE_ADDR=".$_SERVER["REMOTE_ADDR"]." /boot/PiWebcam/PiWebcam.sh ".$command." 2>&1 ");
+	$ret = shell_exec("sudo REMOTE_ADDR=".$_SERVER["REMOTE_ADDR"]." /boot/IvliKam/IvliKam.sh ".$command." 2>&1 ");
 	if (array_key_exists("DEBUG",$config) && $config["DEBUG"]) array_push($message["info"],$ret);
 	return $ret;
 }
@@ -51,21 +52,35 @@ function load_config() {
 
 // generate a bootstrap modal with the given name and message. On close re-enable the button through which the modal was generated, on submit submit the form
 function generate_modal($name,$message,$button,$form) {
-	print('<div class="modal fade" id="'.$name.'" tabindex="-1" role="dialog" aria-labelledby="'.$name.'_label" aria-hidden="true">'."\n");
+    $onclick  = '$("#'.$name.'_button").addClass("disabled");';
+    $onclick .= '$("#'.$name.'_button").html("Please Wait...");';
+    $onclick .= '$("#'.$form.'").submit();';
+
+    if (in_array($name, [
+      'import_modal',
+      'reboot_modal',
+      'factory_reset_modal',
+      'data_reset_modal',
+      'upgrade_modal'
+    ])) {
+      $onclick .= "check_for_connectivity();";
+    }
+
+    print('<div class="modal fade" id="'.$name.'" tabindex="-1" role="dialog" aria-labelledby="'.$name.'_label" aria-hidden="true">'."\n");
     print('		<div class="modal-dialog">'."\n");
     print('			<div class="modal-content">'."\n");
     print('				<div class="modal-header">'."\n");
     print('					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'."\n");
-    print('					<h4 class="modal-title" id="confirm_label">Are you sure?</h4>'."\n");
-	print('				</div>'."\n");
+    print('					<h4 class="modal-title" id="confirm_label">' . $title . '</h4>'."\n");
+    print('				</div>'."\n");
     print('				<div class="modal-body">'.$message.'<br><br>Do you want to continue?</div>'."\n");
     print('				<div class="modal-footer">'."\n");
     print('					<button type="button" onclick=\'$("#'.$button.'").removeClass("disabled");\' class="btn btn-default" data-dismiss="modal">Close</button>'."\n");
-    print('					<button type="button" id="'.$name.'_button" onclick=\'$("#'.$name.'_button").addClass("disabled"); $("#'.$name.'_button").html("Please Wait..."); $("#'.$form.'").submit()\' class="btn btn-primary">Confirm</button>'."\n");
+    print('					<button type="button" id="'.$name.'_button" onclick=\''.$onclick.'\' class="btn btn-primary">Confirm</button>'."\n");
     print('				</div>'."\n");
     print('			</div>'."\n");
     print('		</div>'."\n");
-	print('</div>'."\n");
+    print('</div>'."\n");
 }
 
 // load the constants and variables

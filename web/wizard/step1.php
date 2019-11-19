@@ -1,83 +1,17 @@
-<?php
-    include "header.php";
-    // form submitted
-    if(count($_REQUEST) > 0) {
-        // system configuration form
-        if ($_REQUEST["action"] === "configure_system") {
-            save_config(array('DEVICE_NAME','DEVICE_PASSWORD','DEVICE_TIMEZONE','DEVICE_COUNTRY_CODE','DEVICE_SSH','DEVICE_LED','DEBUG'));
-            run("configure_system");
-            load_config();
-            array_push($message["success"],"Configuration applied successfully");
-        }
-        // export configuration form
-        if ($_REQUEST["action"] === "export_config") {
-            // make the user downloading the configuration file
-            $config = run("show_config");
-            header("Content-Disposition: attachment; filename=\"IvliKam.conf\"");
-            header("Content-Type: application/force-download");
-            header("Content-Length: ".strlen($config));
-            header("Connection: close");
-            print("$config");
-            exit();
-        }
-        // import configuration form
-        if ($_REQUEST["action"] === "import_config") {
-            if ($_FILES["file"]["error"] === 0) {
-                // import the configuration file
-                run("import_config '".$_FILES["file"]["tmp_name"]."'");
-                run("configure");
-                load_config();
-                array_push($message["success"],"Configuration imported successfully");
-            } else array_push($message["warning"],"Invalid configuration file provided");
-        }
-        // upgrade form
-        if ($_REQUEST["action"] === "upgrade") {
-            if ($_FILES["file"]["error"] === 0) {
-                // import the firmware
-                run("import_firmware '".$_FILES["file"]["tmp_name"]."'");
-                array_push($message["warning"],"The upgrade in progress, the device will reboot once finished.");
-            } else array_push($message["danger"],"Invalid firmware provided");
-        }
-        // reboot form
-        if ($_REQUEST["action"] === "reboot") {
-            run("reboot");
-        }
-        // factory reset form
-        if ($_REQUEST["action"] === "factory_reset") {
-            run("factory_reset");
-            run("reboot");
-        }
-        // data reset form
-        if ($_REQUEST["action"] === "data_reset") {
-            run("data_reset");
-            run("reboot");
-        }
-    }
-
-    // generate the modals
-    generate_modal("confirm_modal","If the password has changed, you will need to re-authenticate with the new credentials.<br><br>If the hostname has changed, please consider rebooting the device after applying the new settings.","button","form");
-    generate_modal("import_modal","Ensure the configuration file is valid. The device will be rebooted to apply the new settings. The page will automatically reload once the device is back online.","import_button","import_form");
-    generate_modal("reboot_modal","The device will be rebooted. The page will automatically reload once the device is back online.","reboot_button","reboot_form");
-    generate_modal("factory_reset_modal","By restoring factory defaults all the current settings will be lost and the camera pictures/movies deleted.<br><br>This operation is irreversible.<br><br>The system will automatically reboot after restoring to its original state.<br>The page will automatically reload once the device is back online.","factory_reset_button","factory_reset_form");
-    generate_modal("data_reset_modal","All camera pictures/movies will be deleted but configuration settings will be kept.<br><br>The system will automatically reboot.<br>The page will automatically reload once the device is back online.","data_reset_button","data_reset_form");
-    generate_modal("upgrade_modal","The device is about to be upgraded.<br><br>The system will reboot to complete the process and install the update.<br>The page will automatically reload once the device is back online.","upgrade_button","upgrade_form");
-
-    include "messages.php";
-?>
             <div class="row">
                 <div class="col-lg-12">
                     <div class="panel panel-<?php print $env["MY_WEB_PANEL_STYLE"] ?>">
                         <div class="panel-heading">
-                            <i class="fa fa-gears fa-fw"></i> System
+                           <i class="fa fa-gears fa-fw"></i> Step 1/3: System settings
                         </div>
                         <div class="panel-body">
                             <div class="row">
-                                <div class="col-lg-6">
+                                <div class="col-lg-12">
                                     <div class="panel panel-default">
                                         <div class="panel-body">
-                                        <h3>Device Settings</h3>
-                                            <form id="form" method="POST" role="form">
-                                            <input type="hidden" name="action" value="configure_system">
+                                            <h3>Device Settings</h3>
+                                            <form id="form" method="POST" role="form" action="?step=2">
+                                                <input type="hidden" name="action" value="step1">
                                                 <div class="form-group">
                                                     <label>Name</label>
                                                     <input class="form-control" name="DEVICE_NAME" value="<?php print $config["DEVICE_NAME"] ?>" required>
@@ -101,7 +35,7 @@
                                                             }
                                                         ?>
                                                     </select>
-                                                <p class="help-block">The timezone will be used for displaying the right time</p>
+                                                    <p class="help-block">The timezone will be used for displaying the right time</p>
                                                 </div>
                                                 <div class="form-group">
                                                     <label>Country Code</label>
@@ -142,80 +76,8 @@
                                                     </label>
                                                 </div>
                                                 <p class="help-block">Increase the verbosity and print out debug messages for troubleshooting (<i>default: unchecked</i>).</p>
-                                                <button id="button" type="submit" onclick='$("#button").addClass("disabled"); $("#confirm_modal").modal("show");return false;' class="pull-right btn btn-primary">Apply settings</button>
+                                                <button id="button" type="submit" onclick='$("#button").addClass("disabled");' class="pull-right btn btn-primary">Next</button>
                                             </form>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6">
-                                    <div class="panel panel-default">
-                                        <div class="panel-body">
-                                        <h3>Configuration</h3>
-                                            <form method="POST" role="form">
-                                            <input type="hidden" name="action" value="export_config">
-                                            <input type="hidden" name="no_headers" value="1">
-                                                <label>Export configuration</label>
-                                                <div class="form-group">
-                                                    <button type="submit" class="btn btn-outline btn-primary">Export</button>
-                                                    <p class="help-block">Click to export the settings of this device</p>
-                                                </div>
-                                            </form>
-                                            <form id="import_form" method="POST" role="form" enctype="multipart/form-data">
-                                            <input type="hidden" name="action" value="import_config">
-                                                <label>Import configuration</label>
-                                                <div class="form-group">
-                                                    <input name="file" type="file">
-                                                </div>
-                                                <div class="form-group">
-                                                    <button id="import_button" type="submit" onclick='$("#import_button").addClass("disabled"); $("#import_modal").modal("show");return false;' class="btn btn-outline btn-primary" >Import</button>
-                                                    <p class="help-block">Select the new firmware from your computer and click to import</p>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-body">
-                                        <h3>System Upgrade</h3>
-                                            <form id="upgrade_form" method="POST" role="form" enctype="multipart/form-data">
-                                            <input type="hidden" name="action" value="upgrade">
-                                                <label>Upgrade Device</label>
-                                                <div class="form-group">
-                                                    <input name="file" type="file">
-                                                </div>
-                                                <div class="form-group">
-                                                    <button id="upgrade_button" type="submit" onclick='$("#upgrade_button").addClass("disabled"); $("#upgrade_modal").modal("show");return false;' class="btn btn-outline btn-primary" >Upgrade</button>
-                                                    <p class="help-block">Select an update file from your computer and click to upgrade the firmware of this device</p>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="panel panel-default">
-                                        <div class="panel-body">
-                                        <center><h3>Device Management</h3></center>
-                                            <div class="row">
-                                                <div class="col-lg-4"><center>
-                                                    <form id="reboot_form" method="POST" role="form">
-                                                    <input type="hidden" name="action" value="reboot">
-                                                        <button id="reboot_button" type="submit" onclick='$("#reboot_button").addClass("disabled"); $("#reboot_modal").modal("show");return false;' class="btn btn-info">Reboot</button>
-                                                    </form></center>
-                                                </div>
-                                                <div class="col-lg-4"><center>
-                                                    <form id="data_reset_form" method="POST" role="form">
-                                                    <input type="hidden" name="action" value="data_reset">
-                                                        <button id="data_reset_button" type="submit" onclick='$("#data_reset_button").addClass("disabled"); $("#data_reset_modal").modal("show");return false;' class="btn btn-warning">Data Reset</button>
-                                                    </form></center>
-                                                </div>
-                                                <div class="col-lg-4"><center>
-                                                    <form id="factory_reset_form" method="POST" role="form">
-                                                    <input type="hidden" name="action" value="factory_reset">
-                                                        <button id="factory_reset_button" type="submit" onclick='$("#factory_reset_button").addClass("disabled"); $("#factory_reset_modal").modal("show");return false;' class="btn btn-danger">Factory Reset</button>
-                                                    </form></center>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -224,6 +86,3 @@
                     </div>
                 </div>
             </div>
-<?php
-    include "footer.php"
-?>

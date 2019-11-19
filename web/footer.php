@@ -1,9 +1,9 @@
-		<div class="row">
-			<div class="col-lg-12">
-				 <div class="pull-right">
-					<h5><small>PiWebcam v<?php print $env["MY_VERSION"] ?> (Build <?php print $env["MY_BUILD"] ?>)</small></h5>
-				</div>
-			</div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="pull-right">
+                    <h5><small>IvliKam (PiWebcam) v<?php print $env["MY_VERSION"] ?> (Build <?php print $env["MY_BUILD"] ?>)</small></h5>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -16,19 +16,22 @@
 
     <!-- Metis Menu Plugin JavaScript -->
     <script src="js/metisMenu.min.js"></script>
-	
-	<!-- DataTables JavaScript -->
+
+    <!-- DataTables JavaScript -->
     <script src="js/jquery.dataTables.min.js"></script>
     <script src="js/dataTables.bootstrap.min.js"></script>
     <script src="js/dataTables.responsive.js"></script>
 
     <!-- Custom Theme JavaScript -->
     <script src="js/sb-admin-2.js"></script>
-	
-	<?php
-		// if a page is requesting to add something to the footer, print it out
-		foreach ($footer as $index => $entry) echo "$entry\n"
-	?>
+
+    <!-- Custom JavaScript -->
+    <script src="js/ivlikam.js"></script>
+
+    <?php
+        // if a page is requesting to add something to the footer, print it out
+        foreach ($footer as $index => $entry) echo "$entry\n"
+    ?>
 
 </body>
 
